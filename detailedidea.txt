@@ -1,0 +1,1777 @@
+# MASTER DEVELOPMENT PROMPT
+# V-DJ — Autonomous Hybrid AI DJ & Multi-Phone Stereo Party Platform
+
+## 1. ROLE AND MISSION
+
+Act as a senior full-stack software architect, Laravel engineer, React/TypeScript engineer, professional DJ audio-systems engineer, Web Audio API specialist, WebRTC engineer, and AI integration specialist.
+
+Your mission is to design, build, test, and deliver **V-DJ**, a production-minded, mobile-first Progressive Web Application (PWA) that functions as an autonomous AI DJ.
+
+V-DJ should allow users to describe the music experience they want in natural language, select available music sources, and let an AI DJ automatically:
+
+1. Discover and select suitable music.
+2. Organize tracks into an intelligent DJ set.
+3. Create a natural energy progression.
+4. Analyze BPM and musical beat positions.
+5. Prepare the next track while the current track plays.
+6. Synchronize tempos and musical downbeats.
+7. Perform automatic DJ transitions.
+8. Apply EQ adjustments and audio effects.
+9. Maintain uninterrupted playback.
+10. Broadcast the mixed music to multiple phones connected to the same party room.
+11. Distribute left and right stereo channels across separate phones.
+12. Allow users to override the AI DJ and control the experience manually.
+
+The final product must be a genuinely functional DJ application, not a UI demonstration, static prototype, or collection of disconnected components.
+
+### Core product vision
+
+A user should be able to open V-DJ, enter:
+
+"Start with relaxing lo-fi music, gradually build into energetic melodic house around 126 BPM, introduce powerful progressive tracks, and finish with uplifting electronic music."
+
+The application should understand this request, generate a suitable music sequence, and operate as an autonomous DJ.
+
+The user should not need to manually manage every track or transition.
+
+The application should also allow friends to connect their phones to one party room, turning multiple smartphones into a coordinated stereo speaker system.
+
+**The ultimate experience: One AI DJ, multiple phones, one synchronized party.**
+
+---
+
+# 2. NON-NEGOTIABLE ARCHITECTURAL PRINCIPLES
+
+## 2.1 Separation of Brain and Muscle
+
+Maintain strict separation between backend intelligence and client-side audio execution.
+
+**Laravel is the Brain.**
+
+Laravel handles:
+
+- Authentication and authorization.
+- User preferences.
+- Party room management.
+- Music metadata discovery.
+- External music provider integrations.
+- AI setlist generation.
+- Transition planning.
+- Session management.
+- WebSocket communication.
+- WebRTC signaling.
+- Peer registration.
+- Party state synchronization.
+
+**React and TypeScript are the Muscle.**
+
+The browser handles:
+
+- Audio playback.
+- Audio decoding.
+- BPM analysis.
+- Beat and downbeat detection.
+- Tempo synchronization.
+- Audio mixing.
+- EQ.
+- Audio effects.
+- Crossfading.
+- Transition scheduling.
+- Stereo channel separation.
+- Local audio processing.
+- WebRTC audio transmission.
+- Guest audio playback.
+
+**Critical restriction:**
+
+NEVER transmit raw music audio through PHP, Laravel controllers, Laravel queues, or Reverb.
+
+The audio must remain on the client devices and travel directly between devices through WebRTC.
+
+Laravel must only coordinate the application and its connections.
+
+## 2.2 Reliability over artificial completeness
+
+Never mark a feature as complete simply because:
+
+- Its button exists.
+- Its component renders.
+- An API endpoint returns HTTP 200.
+- A WebRTC connection reports connected.
+- A transition animation plays.
+- A track appears in the queue.
+
+A feature is complete only when its actual intended functionality works.
+
+Never implement fake BPM values, simulated audio synchronization, artificial playback progress, placeholder stream URLs, or mocked transitions in production code.
+
+If an external service requires API credentials, approval, or unavailable permissions, implement the integration correctly, expose its actual status, and document what remains dependent on external access.
+
+Do not silently replace unavailable functionality with fabricated success.
+
+## 2.3 Incremental development
+
+Do not attempt to generate the entire application in one enormous implementation step.
+
+Build the application in defined phases.
+
+For each phase:
+
+1. Inspect the existing codebase.
+2. Understand the architecture.
+3. Identify dependencies.
+4. Implement the required functionality.
+5. Run relevant automated tests.
+6. Fix discovered issues.
+7. Verify actual behavior.
+8. Document completed work.
+9. Proceed only when the phase's acceptance criteria are satisfied.
+
+Never discard working code or rewrite stable modules unnecessarily.
+
+Preserve existing functionality when introducing new features.
+
+---
+
+# 3. REQUIRED TECHNOLOGY STACK
+
+Use the following technologies unless a genuine compatibility issue requires an explicitly documented alternative.
+
+## Backend
+
+- PHP 8.2+
+- Laravel 11+
+- Laravel Sanctum
+- Laravel Reverb
+- Laravel Broadcasting
+- SQLite for initial development, with MySQL compatibility
+- Redis or Laravel-supported cache
+- Laravel queues where background processing is appropriate
+
+## Frontend
+
+- React 18+
+- TypeScript
+- Vite
+- Tailwind CSS
+- Zustand
+- React Router
+- Lucide React
+- qrcode.react
+- Progressive Web App support
+
+## Audio processing
+
+Use native browser audio technologies:
+
+- AudioContext
+- AudioWorklet
+- AudioBuffer
+- AudioBufferSourceNode
+- MediaElementAudioSourceNode
+- GainNode
+- BiquadFilterNode
+- DelayNode
+- ConvolverNode
+- DynamicsCompressorNode
+- AnalyserNode
+- ChannelSplitterNode
+- ChannelMergerNode
+- MediaStreamAudioDestinationNode
+
+Use `web-audio-beat-detector` or a compatible maintained alternative for BPM and downbeat analysis.
+
+Use Web Workers or AudioWorklet for processing that should not block the main UI thread.
+
+## Real-time communication
+
+- WebRTC
+- RTCPeerConnection
+- RTCDataChannel
+- WebSocket signaling through Laravel Reverb
+- STUN servers
+- TURN server support for networks where direct peer connectivity is unavailable
+
+## AI
+
+- Google Gemini API
+- Configurable Gemini model
+- Local deterministic planning engine
+- Identical output contract for both planning strategies
+
+## Music sources
+
+1. Audius REST API.
+2. SoundCloud API with OAuth where supported.
+3. Local audio files uploaded or selected by the user.
+
+All integrations must follow the current official API documentation and actual provider permissions.
+
+Do not assume that a particular provider offers unrestricted streaming, playlist access, or playback for every track.
+
+---
+
+# 4. PROJECT STRUCTURE
+
+Create a clean, maintainable workspace:
+
+```text
+v-dj/
+│
+├── backend/
+│   ├── app/
+│   │   ├── Models/
+│   │   ├── Http/
+│   │   │   ├── Controllers/Api/
+│   │   │   ├── Requests/
+│   │   │   └── Resources/
+│   │   ├── Services/
+│   │   │   ├── AI/
+│   │   │   ├── Music/
+│   │   │   ├── Party/
+│   │   │   └── WebRTC/
+│   │   ├── Events/
+│   │   ├── Strategies/
+│   │   └── Jobs/
+│   ├── database/
+│   │   ├── migrations/
+│   │   └── seeders/
+│   ├── routes/
+│   ├── tests/
+│   └── .env.example
+│
+├── frontend/
+│   ├── public/
+│   └── src/
+│       ├── app/
+│       ├── components/
+│       │   ├── layout/
+│       │   ├── dj/
+│       │   ├── decks/
+│       │   ├── queue/
+│       │   ├── party/
+│       │   └── ui/
+│       ├── audio/
+│       │   ├── decks/
+│       │   ├── effects/
+│       │   ├── analysis/
+│       │   ├── transitions/
+│       │   └── scheduler/
+│       ├── webrtc/
+│       ├── music/
+│       │   ├── audius/
+│       │   ├── soundcloud/
+│       │   └── local/
+│       ├── ai/
+│       ├── hooks/
+│       ├── stores/
+│       ├── services/
+│       ├── types/
+│       └── workers/
+│
+├── docs/
+│   ├── ARCHITECTURE.md
+│   ├── AUDIO_ENGINE.md
+│   ├── PARTY_SYNC.md
+│   ├── MUSIC_INTEGRATIONS.md
+│   └── TESTING.md
+│
+└── README.md
+```
+
+Adjust the structure when necessary, but maintain clear separation between business logic, audio processing, external integrations, and user interface code.
+
+---
+
+# 5. DATABASE DESIGN AND BACKEND
+
+Implement proper migrations, models, relationships, validation, authorization, and database indexes.
+
+## 5.1 Users
+
+Create or extend the users table with:
+
+- Standard Laravel authentication fields.
+- `audius_handle` nullable.
+- `soundcloud_token` encrypted and nullable.
+- `preferred_ai_mode`, default `gemini`.
+- User music preferences.
+- Timestamps.
+
+Sensitive OAuth tokens must never be returned in API responses.
+
+Use secure token storage and refresh handling where supported.
+
+## 5.2 DJ Sessions
+
+Create `dj_sessions` with:
+
+- ID.
+- User ID, nullable for guest-created sessions where appropriate.
+- Unique six-character uppercase room code.
+- Vibe prompt.
+- AI engine used.
+- Setlist JSON.
+- Current track ID.
+- Playback state.
+- Current playback position.
+- Session status.
+- Session metadata.
+- Timestamps.
+
+Do not store live audio buffers or raw audio data in the database.
+
+## 5.3 Party Peers
+
+Create `party_peers` with:
+
+- ID.
+- DJ session ID.
+- Unique peer identifier.
+- Device name.
+- Stereo channel.
+- Connection status.
+- Latency offset.
+- Last heartbeat.
+- Device capabilities.
+- Timestamps.
+
+Supported channel values:
+
+- `stereo`
+- `left`
+- `right`
+- `sub_mono`
+
+Add appropriate database constraints and indexes.
+
+## 5.4 Additional required entities
+
+Create additional tables where necessary:
+
+- Music source connections.
+- Saved AI DJ preferences.
+- User playlists or imported playlist references.
+- Session track history.
+- Party session settings.
+- Peer connection metadata.
+
+Avoid unnecessarily duplicating information that can be derived from existing records.
+
+---
+
+# 6. HYBRID DUAL-BRAIN AI DJ
+
+Create:
+
+`App\Services\AI\AiDjPlannerService`
+
+Use a strategy-based architecture with two planning engines.
+
+Both engines must return the exact same validated output structure.
+
+## 6.1 Gemini Cloud Brain
+
+Implement:
+
+`GeminiPlannerStrategy`
+
+Responsibilities:
+
+1. Accept the user's natural-language music request.
+2. Analyze the requested musical atmosphere.
+3. Understand genre preferences.
+4. Determine the intended energy progression.
+5. Evaluate available tracks.
+6. Consider BPM compatibility.
+7. Consider known musical key information when available.
+8. Select a coherent track order.
+9. Assign transition styles.
+10. Produce a structured DJ setlist.
+
+Use Gemini structured output capabilities with a strict JSON schema.
+
+Make the model configurable through environment variables.
+
+Default configuration:
+
+```env
+AI_DJ_DEFAULT_MODE=gemini
+GEMINI_API_KEY=
+GEMINI_MODEL=
+```
+
+Do not hardcode an outdated model identifier.
+
+The planner must validate every model response before returning it.
+
+Reject:
+
+- Invalid JSON.
+- Missing required fields.
+- Unknown track IDs.
+- Invalid transition styles.
+- Invalid BPM values.
+- Out-of-range energy values.
+- Impossible transition timings.
+
+The AI must only select tracks that exist in the supplied available-track list.
+
+It must never invent tracks, artists, IDs, or stream URLs.
+
+### AI planning logic
+
+The AI should consider:
+
+- Genre compatibility.
+- Energy progression.
+- BPM compatibility.
+- Musical key compatibility when metadata is available.
+- Track duration.
+- Track quality and availability.
+- Transition feasibility.
+- The user's requested beginning, middle, and ending.
+
+Do not force every set to have the same energy curve.
+
+The user should receive a music experience that reflects the actual prompt.
+
+## 6.2 Local Deterministic Brain
+
+Implement:
+
+`LocalPlannerStrategy`
+
+This engine must work without external AI API calls.
+
+Responsibilities:
+
+- Keyword matching.
+- Genre matching.
+- BPM sorting.
+- Energy scoring.
+- Track ranking.
+- Transition assignment.
+- Smooth progression planning.
+
+Use deterministic rules.
+
+Suggested BPM-based transition selection:
+
+| BPM difference | Transition |
+|---|---|
+| 0–7 BPM | 16-bar bass swap |
+| 8–14 BPM | 8-bar filter sweep |
+| Above 14 BPM | 4-bar echo out |
+
+The engine should also account for genre compatibility and track energy.
+
+It must not claim that it understands natural-language requests as intelligently as Gemini. Its actual capabilities should be clearly represented.
+
+## 6.3 Automatic fallback
+
+When Gemini:
+
+- Is not configured.
+- Returns HTTP 429.
+- Times out.
+- Returns invalid structured output.
+- Encounters a temporary service error.
+
+Automatically attempt the local planner.
+
+Do not expose unnecessary internal API errors to the user.
+
+Record which engine actually generated the setlist.
+
+Use a configurable timeout, retry policy, and one-hour cache for identical normalized prompt and tracklist combinations.
+
+Never cache user-specific credentials or sensitive information with planning results.
+
+## 6.4 Standardized output schema
+
+Both planners must return this contract:
+
+```json
+{
+  "engine_used": "gemini",
+  "vibe_summary": "A gradual journey from relaxing music to energetic melodic house.",
+  "setlist": [
+    {
+      "order": 1,
+      "track_id": "track_001",
+      "title": "Track Title",
+      "artist": "Artist Name",
+      "source_type": "audius",
+      "estimated_bpm": 124,
+      "target_energy": 0.75,
+      "transition_to_next": {
+        "style": "bass_swap",
+        "duration_bars": 16,
+        "trigger_remaining_seconds": 28,
+        "fx": [
+          "lowshelf_cut",
+          "highpass_sweep",
+          "reverb_tail"
+        ]
+      }
+    }
+  ]
+}
+```
+
+Important:
+
+The actual stream URL must come from the relevant music-source adapter.
+
+Do not trust an AI-generated stream URL.
+
+Resolve and validate playable sources independently before starting playback.
+
+Extend the schema with musical key, detected BPM, source metadata, and transition confidence where useful, while preserving the core contract.
+
+---
+
+# 7. MUSIC SOURCE INTEGRATIONS
+
+Create a unified music-source abstraction.
+
+Each provider must implement a consistent interface for:
+
+- Search.
+- Track metadata.
+- Track availability.
+- Duration.
+- Artist.
+- Genre.
+- BPM when available.
+- Stream resolution.
+- Playback error reporting.
+
+## 7.1 Audius
+
+Implement an Audius adapter.
+
+Support:
+
+- Track search.
+- Trending tracks.
+- Artist/user track discovery.
+- Track metadata.
+- Stream URL resolution.
+- Playback availability validation.
+
+Use the current supported Audius discovery/API endpoints.
+
+Do not permanently hardcode a discovery node if the provider supports dynamic discovery.
+
+Handle unavailable tracks and failed stream requests gracefully.
+
+## 7.2 SoundCloud
+
+Implement a dedicated SoundCloud adapter.
+
+Support:
+
+- OAuth authentication.
+- Token storage.
+- Token refresh where supported.
+- Search.
+- Track metadata.
+- Playback URL resolution.
+- API errors.
+- Permission failures.
+
+Verify the current SoundCloud API's OAuth requirements, streaming restrictions, and application approval requirements before implementing playback.
+
+Never pretend that a track can be streamed when the API does not authorize it.
+
+## 7.3 Local music files
+
+Support:
+
+- MP3.
+- WAV.
+- Other browser-supported formats where practical.
+
+Allow:
+
+- Drag and drop.
+- Multiple file selection.
+- Track metadata extraction.
+- Local BPM analysis.
+- IndexedDB caching where appropriate.
+- Offline playback.
+
+Local files must work even when the backend and internet connection are unavailable.
+
+Use browser object URLs carefully and revoke them when no longer required.
+
+Do not upload local music files to Laravel unless a separately authorized feature requires it.
+
+## 7.4 Unified source management
+
+The user should be able to enable or disable music sources independently.
+
+If a provider is unavailable, the application must continue using other available sources.
+
+Do not let a failed SoundCloud integration prevent local music playback.
+
+---
+
+# 8. PROFESSIONAL DUAL-DECK DJ AUDIO ENGINE
+
+Create:
+
+`frontend/src/audio/DjAudioEngine.ts`
+
+Implement a robust TypeScript audio-engine singleton.
+
+React must not control individual audio-processing operations through repeated component renders.
+
+Use dedicated audio classes and predictable lifecycle management.
+
+## 8.1 Dual-deck architecture
+
+Implement:
+
+- Deck A.
+- Deck B.
+- Shared master output.
+- Shared effects bus.
+- Master limiter.
+- Independent deck controls.
+
+Each deck must contain:
+
+1. Audio playback source.
+2. Channel gain.
+3. Three-band EQ.
+4. High-pass/low-pass filter.
+5. Effects send.
+6. Analyser.
+7. Playback state.
+8. BPM information.
+9. Beat offset.
+10. Transition state.
+
+Suggested EQ configuration:
+
+| Band | Filter |
+|---|---|
+| Low | Lowshelf at 250 Hz |
+| Mid | Peaking at 1 kHz |
+| High | Highshelf at 4 kHz |
+
+Support smooth parameter automation.
+
+Avoid abrupt gain changes that create clicks or audio artifacts.
+
+## 8.2 Audio source compatibility
+
+Support both local decoded audio and remote media streams.
+
+Use:
+
+- AudioBufferSourceNode for suitable decoded local tracks.
+- MediaElementAudioSourceNode for streaming media.
+
+Check CORS compatibility before routing remote audio through Web Audio.
+
+If a provider's streaming configuration prevents analysis or audio routing, report the limitation and use an authorized compatible playback strategy.
+
+Do not assume every remote stream can be analyzed through an AnalyserNode.
+
+## 8.3 Beat and downbeat detection
+
+Implement:
+
+`TrackAnalysisService`
+
+When a track is loaded into a standby deck:
+
+1. Analyze its audio.
+2. Estimate BPM.
+3. Detect the first reliable beat.
+4. Determine the downbeat offset.
+5. Calculate beat duration.
+6. Calculate bar duration.
+7. Store analysis results.
+
+Use:
+
+`web-audio-beat-detector`
+
+or a maintained compatible library.
+
+Provide confidence values.
+
+Do not assume the BPM detector always returns a correct result.
+
+If analysis confidence is low, allow manual BPM adjustment.
+
+Support half-time and double-time BPM ambiguity.
+
+## 8.4 Beatmatching
+
+Implement actual tempo synchronization.
+
+Calculate the required playback-rate adjustment using the active and standby BPM.
+
+For example:
+
+If Deck A is playing at 120 BPM and Deck B is 126 BPM, calculate an appropriate tempo adjustment before mixing.
+
+Align downbeats using the detected beat offsets.
+
+Gradually adjust tempo rather than introducing sudden changes.
+
+Important:
+
+A basic playbackRate adjustment also changes pitch. Either implement pitch-preserving time stretching or clearly expose the pitch behavior and limitations.
+
+Do not claim professional pitch-locked beatmatching unless it is genuinely implemented and tested.
+
+## 8.5 Transition Scheduler
+
+Create:
+
+`TransitionScheduler.ts`
+
+Requirements:
+
+- Use AudioContext.currentTime.
+- Implement a lookahead scheduler.
+- Use approximately 25 ms scheduling intervals.
+- Maintain approximately 100 ms scheduling lookahead.
+- Schedule important audio changes against musical timing.
+- Avoid relying on JavaScript setInterval for sample-accurate execution.
+
+Calculate:
+
+```text
+Beat duration = 60 / BPM
+
+Bar duration = 4 × Beat duration
+```
+
+Schedule transitions at appropriate bar boundaries.
+
+Handle:
+
+- Pausing.
+- Resuming.
+- Seeking.
+- Track loading delays.
+- BPM changes.
+- Interrupted playback.
+- Manual transition triggers.
+
+Cancel obsolete scheduled operations when the playback state changes.
+
+## 8.6 Transition types
+
+Implement four real transition algorithms.
+
+### A. Bass Swap
+
+1. Prepare the incoming deck.
+2. Match its tempo.
+3. Start it at the correct beat boundary.
+4. Gradually increase its gain.
+5. Reduce its bass EQ.
+6. Perform the bass exchange at a synchronized downbeat.
+7. Fade the outgoing deck.
+8. Complete the handoff.
+
+Use safe audio parameter scheduling to avoid clicks.
+
+### B. Filter Sweep
+
+1. Start the incoming track.
+2. Introduce its audio gradually.
+3. Raise the outgoing deck's high-pass cutoff.
+4. Automate the filter smoothly.
+5. Reduce the outgoing deck's gain.
+6. Complete the transition.
+
+### C. Echo Out
+
+1. Increase the outgoing deck's effects send.
+2. Apply tempo-synchronized delay.
+3. Reduce the dry signal.
+4. Allow the delay tail to decay.
+5. Bring the incoming deck forward.
+
+Suggested dotted-eighth delay:
+
+```text
+Delay = (60 / BPM) × 0.75
+```
+
+### D. Slam Cut
+
+Schedule an instantaneous crossfader change on a selected musical downbeat.
+
+Do not trigger arbitrary cuts between beats unless the user explicitly requests an immediate manual cut.
+
+## 8.7 Effects bus
+
+Create a shared effects bus with:
+
+- Delay.
+- Feedback control.
+- Procedural convolution reverb.
+- Effects send levels.
+
+Ensure feedback is safely limited.
+
+Prevent runaway audio levels and excessive clipping.
+
+## 8.8 Master output
+
+Route:
+
+Deck A + Deck B → Master Gain → Dynamics Compressor → Output Distribution.
+
+Provide two outputs:
+
+1. Local speakers.
+2. MediaStreamAudioDestinationNode for WebRTC broadcasting.
+
+Allow the host to mute local speakers while continuing to transmit the master mix to guests.
+
+Include master volume and clipping protection.
+
+---
+
+# 9. MULTI-PHONE PARTY SYSTEM
+
+Create:
+
+`frontend/src/webrtc/PartySyncManager.ts`
+
+The party system is a core product feature, not an optional demonstration.
+
+The host should be able to connect multiple phones and distribute the DJ output.
+
+## 9.1 Party creation
+
+Implement:
+
+`POST /api/party/create`
+
+Return:
+
+- Session ID.
+- Six-character room code.
+- Join URL.
+- Room metadata.
+- Host information.
+
+Generate QR codes for easy joining.
+
+## 9.2 Guest joining
+
+Implement:
+
+`POST /api/party/{roomCode}/join`
+
+Requirements:
+
+- Validate the room.
+- Register the device.
+- Create a unique peer identity.
+- Assign an initial channel.
+- Return the required connection information.
+- Broadcast peer registration.
+
+Default assignment:
+
+- First guest: LEFT.
+- Second guest: RIGHT.
+- Additional guests: STEREO.
+
+The host must be able to override assignments.
+
+Never identify a device only by its display name.
+
+## 9.3 WebRTC signaling
+
+Implement:
+
+- Offer exchange.
+- Answer exchange.
+- ICE candidate exchange.
+- Peer registration.
+- Peer disconnection.
+- Reconnection.
+- Session expiration.
+
+Use Laravel Reverb for signaling.
+
+Use authenticated or properly authorized presence channels.
+
+Validate the sender, target peer, room membership, and message size for every signaling request.
+
+Never expose unrestricted signaling endpoints.
+
+Support STUN and configurable TURN servers.
+
+Do not assume all mobile networks allow direct peer-to-peer connectivity.
+
+## 9.4 Host audio broadcasting
+
+Capture:
+
+`masterStreamDest.stream`
+
+Transmit the stereo audio using WebRTC audio tracks.
+
+Configure audio processing constraints appropriately.
+
+Disable unnecessary voice-oriented processing when supported:
+
+- Echo cancellation.
+- Noise suppression.
+- Automatic gain control.
+
+Verify actual browser behavior instead of assuming SDP settings can disable every device-level audio-processing feature.
+
+Preserve stereo whenever the browser, codec, and connection support it.
+
+Monitor connection quality and report when stereo is unavailable.
+
+## 9.5 Guest speaker mode
+
+Guest devices must be able to join using:
+
+- QR code.
+- Six-character room code.
+- Direct party URL.
+
+The guest interface must display a prominent:
+
+**TAP TO JOIN AUDIO**
+
+button.
+
+The user gesture should initialize or resume AudioContext to satisfy mobile browser autoplay restrictions.
+
+After joining, receive the host's WebRTC audio stream.
+
+Use:
+
+ChannelSplitterNode and ChannelMergerNode.
+
+Supported channel modes:
+
+**LEFT**
+
+Play the left channel through the guest's available speaker output.
+
+**RIGHT**
+
+Play the right channel through the guest's available speaker output.
+
+**STEREO**
+
+Play both channels.
+
+**SUB MONO**
+
+Sum the left and right signals and apply a 140 Hz low-pass filter.
+
+Do not assume every phone has a physical stereo speaker arrangement or that its output routing can be controlled by the browser.
+
+For a single-phone speaker playing a designated channel, duplicate the selected channel to both output channels where appropriate.
+
+Ensure all routing works with actual received WebRTC audio, not a simulated local signal.
+
+---
+
+# 10. ADVANCED AUDIO SYNCHRONIZATION
+
+This is one of the most important engineering requirements.
+
+Multiple phones must reproduce the same music as closely together as browser and device limitations permit.
+
+A WebRTC connection alone does not guarantee synchronized speaker output.
+
+Implement an actual synchronization strategy.
+
+## 10.1 Clock synchronization
+
+Exchange clock information over:
+
+`RTCDataChannel("sync-clock")`
+
+The host periodically sends:
+
+- Host audio clock.
+- Host monotonic clock.
+- Session playback position.
+- Playback state.
+
+Guests respond with timestamps.
+
+Use an NTP-style ping/pong approach to estimate:
+
+- Round-trip time.
+- Clock offset.
+- Clock drift.
+- Network jitter.
+
+Do not simply assume that RTT divided by two is the complete one-way audio latency.
+
+Use repeated samples and a stable estimation method.
+
+## 10.2 Drift correction
+
+Implement gradual guest playback synchronization.
+
+Monitor:
+
+- Estimated host playback position.
+- Guest playback position.
+- Audio buffering.
+- Network jitter.
+- Clock drift.
+
+Apply small corrections where technically possible.
+
+Avoid sudden playback jumps or audible speed fluctuations.
+
+Separate clock synchronization from acoustic speaker alignment.
+
+## 10.3 Manual latency adjustment
+
+Provide a guest-side fine-tuning slider:
+
+```text
+Minimum: -150 ms
+Maximum: +150 ms
+Default: 0 ms
+```
+
+Allow guests to adjust synchronization while listening.
+
+Persist the setting for the current session.
+
+## 10.4 Important synchronization limitation
+
+Do not promise perfect phase alignment across arbitrary smartphones.
+
+Different devices have different:
+
+- Audio output latency.
+- Bluetooth latency.
+- Speaker hardware.
+- Browser audio pipelines.
+- Network conditions.
+- Operating-system scheduling behavior.
+
+The implementation must measure and compensate where possible, report synchronization quality, and clearly distinguish estimated network latency from actual acoustic output latency.
+
+Prioritize wired or low-latency audio output when testing the stereo party feature.
+
+---
+
+# 11. PARTY BACKEND API AND EVENTS
+
+Implement the following APIs:
+
+| Endpoint | Purpose |
+|---|---|
+| POST `/api/party/create` | Create a party |
+| POST `/api/party/{roomCode}/join` | Join a party |
+| POST `/api/party/{roomCode}/leave` | Leave a party |
+| POST `/api/party/{roomCode}/channel` | Update speaker channel |
+| POST `/api/party/{roomCode}/signal` | Relay WebRTC signaling |
+| GET `/api/party/{roomCode}` | Retrieve party information |
+| GET `/api/party/{roomCode}/peers` | Retrieve connected peers |
+| POST `/api/party/{roomCode}/heartbeat` | Update peer presence |
+
+Implement appropriate request validation, rate limiting, authorization, and error responses.
+
+Required events:
+
+- PeerJoined.
+- PeerLeft.
+- PeerChannelUpdated.
+- WebRtcSignalEvent.
+- PartyPlaybackUpdated.
+- PartyStateUpdated.
+
+Use presence channels for connected party members.
+
+Do not broadcast secrets, access tokens, or unnecessary private information.
+
+---
+
+# 12. FRONTEND USER INTERFACE AND EXPERIENCE
+
+Build a premium, polished, responsive DJ interface.
+
+The design should feel like a professional digital DJ console combined with a modern AI music application.
+
+## 12.1 Visual identity
+
+Use:
+
+- Background: `#0B0D12`
+- Cyan accent: `#00F5D4`
+- Magenta accent: `#FF2E93`
+- Dark elevated panels.
+- Subtle gradients.
+- Professional typography.
+- Smooth animations.
+- Clear visual hierarchy.
+- Consistent spacing.
+
+Use cyan and magenta to distinguish Deck A and Deck B.
+
+Avoid excessive visual clutter.
+
+The interface must work on desktop, tablets, and mobile phones.
+
+## 12.2 Top navigation
+
+Include:
+
+- V-DJ logo.
+- Application navigation.
+- AI mode indicator.
+- Gemini Cloud status.
+- Local Offline status.
+- Party Link button.
+- User/account controls.
+
+The AI mode indicator must display the engine actually used, not just the user's preferred setting.
+
+## 12.3 AI Vibe Prompt
+
+Create a prominent natural-language input.
+
+Example:
+
+"Play chill electronic music for 15 minutes, build into progressive house, maintain around 126 BPM, and finish with an energetic track."
+
+Include:
+
+- Vibe prompt.
+- Music-source selectors.
+- AI mode selector.
+- Generate & Mix button.
+
+Display useful validation messages.
+
+During planning, show actual progress stages.
+
+Do not fabricate AI-generated progress percentages.
+
+## 12.4 Dual DJ Decks
+
+Build two visually distinct decks.
+
+Each deck must show:
+
+- Track title.
+- Artist.
+- Album artwork when available.
+- Playback progress.
+- Remaining time.
+- BPM.
+- Tempo adjustment.
+- Play/pause.
+- EQ controls.
+- Filter control.
+- Effects.
+- Deck status.
+- Active/standby state.
+
+Include live waveform or frequency visualization using AnalyserNode.
+
+Visualizations must reflect actual audio data.
+
+## 12.5 Crossfader
+
+Implement a real crossfader.
+
+Moving the crossfader must change the audio gain of Deck A and Deck B.
+
+Use a suitable crossfade curve.
+
+The visual position and audio output must always agree.
+
+## 12.6 AI DJ automation
+
+Display:
+
+- Current track.
+- Next track.
+- Planned transition.
+- Transition countdown.
+- Tempo matching state.
+- Current energy level.
+- AI DJ status.
+
+Allow the user to:
+
+- Pause automation.
+- Resume automation.
+- Skip track.
+- Trigger transition immediately.
+- Change the next track.
+- Reorder the queue.
+- Take manual control.
+
+When the user takes manual control, the AI must not unexpectedly override their changes.
+
+## 12.7 Queue and timeline
+
+Display upcoming tracks with:
+
+- Track information.
+- BPM.
+- Estimated energy.
+- Source.
+- Planned transition.
+- Transition duration.
+
+Support drag-and-drop reordering.
+
+Update the transition plan when queue order changes.
+
+Validate the updated plan before execution.
+
+## 12.8 Party host console
+
+Show:
+
+- Room code.
+- QR code.
+- Join URL.
+- Connected devices.
+- Device names.
+- Connection status.
+- Estimated latency.
+- Assigned channel.
+- Synchronization quality.
+
+Allow the host to assign:
+
+- LEFT.
+- RIGHT.
+- STEREO.
+- SUB.
+
+Channel changes must update the actual guest playback routing.
+
+## 12.9 Guest speaker interface
+
+Create a simple full-screen interface.
+
+Display:
+
+- Party name.
+- Connected status.
+- Assigned speaker channel.
+- Current track.
+- Audio level.
+- Synchronization offset.
+- Volume control.
+- Latency fine-tuning slider.
+- Leave party button.
+
+The interface should be understandable even for users who know nothing about DJ software.
+
+---
+
+# 13. STATE MANAGEMENT AND ERROR HANDLING
+
+Use Zustand for application state.
+
+Separate the following state domains:
+
+1. Authentication.
+2. AI planning.
+3. Music sources.
+4. Track queue.
+5. Deck A.
+6. Deck B.
+7. Audio engine.
+8. Playback.
+9. Party room.
+10. WebRTC peers.
+11. Synchronization.
+12. User settings.
+
+Do not put high-frequency audio processing data into React state.
+
+Keep real-time audio scheduling outside component render cycles.
+
+Implement centralized error handling.
+
+Handle:
+
+- AudioContext suspended.
+- Unsupported audio formats.
+- Missing stream URLs.
+- CORS failures.
+- Gemini failures.
+- Music provider errors.
+- Invalid API responses.
+- WebRTC disconnections.
+- ICE failures.
+- Reverb disconnections.
+- Mobile browser autoplay restrictions.
+- Offline operation.
+- Session expiration.
+- Duplicate party joins.
+
+Every important failure should have a clear user-facing message and an appropriate recovery action.
+
+Never leave the application in a misleading state after an error.
+
+---
+
+# 14. OFFLINE-FIRST BEHAVIOR
+
+V-DJ must retain useful functionality without an internet connection.
+
+Implement PWA support with:
+
+- Web app manifest.
+- Service worker.
+- Application shell caching.
+- Offline status detection.
+- Cached local music metadata.
+- IndexedDB local file references where possible.
+- Local planner.
+- Client-side BPM analysis.
+
+When offline:
+
+The user must still be able to:
+
+1. Open the application shell.
+2. Select local music files.
+3. Analyze tracks.
+4. Generate a deterministic local setlist.
+5. Play music.
+6. Use both decks.
+7. Perform transitions.
+
+Cloud AI, external streaming, and new remote party connections may be unavailable offline.
+
+Do not misrepresent these capabilities as working without connectivity.
+
+Previously established peer connections may behave differently during network interruption; handle their actual state rather than promising uninterrupted connectivity.
+
+---
+
+# 15. SECURITY AND PERFORMANCE
+
+## Security
+
+Implement:
+
+- Sanctum authentication.
+- Proper guest access restrictions.
+- Secure room-code validation.
+- OAuth token encryption.
+- Input validation.
+- Rate limiting.
+- Secure Reverb authorization.
+- Signaling payload validation.
+- Peer ownership validation.
+- Session expiration.
+- Protection against unauthorized channel changes.
+
+Never expose API secrets in frontend code.
+
+Never expose private OAuth credentials through logs or API responses.
+
+## Performance
+
+Optimize for typical modern smartphones and desktop browsers.
+
+Requirements:
+
+- No unnecessary React renders in audio loops.
+- No blocking BPM analysis on the main UI thread.
+- Efficient audio buffer management.
+- Proper resource cleanup.
+- No unnecessary network polling.
+- Reuse WebRTC connections where appropriate.
+- Handle large local files without loading unnecessary duplicate copies into memory.
+- Avoid memory leaks from AudioNodes, object URLs, event listeners, and peer connections.
+
+Provide graceful behavior on lower-powered devices.
+
+---
+
+# 16. TESTING AND VERIFICATION
+
+Testing is mandatory.
+
+Do not consider the project complete without meaningful automated and manual verification.
+
+## 16.1 Backend tests
+
+Test:
+
+- User authentication.
+- Guest party creation.
+- Unique room-code generation.
+- Party joining.
+- Peer registration.
+- Channel assignment.
+- Channel updates.
+- Signaling authorization.
+- Gemini response validation.
+- Local planner.
+- Gemini fallback.
+- Music provider error handling.
+- Session expiration.
+
+## 16.2 Frontend tests
+
+Test:
+
+- Audio engine initialization.
+- Deck loading.
+- Play/pause.
+- BPM analysis.
+- Downbeat calculation.
+- EQ automation.
+- Crossfader behavior.
+- Transition scheduling.
+- Bass swap.
+- Filter sweep.
+- Echo out.
+- Slam cut.
+- Queue changes.
+- Local file playback.
+- Audio resource cleanup.
+
+Use appropriate browser automation and unit-testing tools.
+
+Mock external APIs for automated integration tests, but never mistake mocked tests for real-provider verification.
+
+## 16.3 WebRTC tests
+
+Verify:
+
+- Host creates room.
+- Guest joins.
+- Offer/answer exchange.
+- ICE negotiation.
+- Audio transmission.
+- Stereo channel separation.
+- Channel switching.
+- Guest disconnection.
+- Guest reconnection.
+- Multiple connected peers.
+- Latency measurement.
+- Synchronization corrections.
+
+## 16.4 Real-device testing
+
+Perform actual testing with:
+
+- One desktop or laptop as host.
+- At least two smartphones as guests.
+- The same local Wi-Fi network.
+- Chrome or Chromium.
+- Mobile Chrome.
+- Mobile Safari where available.
+
+Verify that:
+
+1. The host plays actual music.
+2. Guest phones receive actual audio.
+3. LEFT receives the left channel.
+4. RIGHT receives the right channel.
+5. STEREO receives both channels.
+6. SUB receives the filtered mono mix.
+7. The host can change guest assignments.
+8. The audio remains stable during transitions.
+9. Synchronization measurements respond to actual conditions.
+10. Disconnected phones can reconnect.
+
+Document browser-specific limitations and measured results.
+
+Do not claim real-device testing was completed unless it actually was.
+
+---
+
+# 17. ONE-SHOT FULL APPLICATION IMPLEMENTATION
+
+**CRITICAL EXECUTION DIRECTIVE: Build the complete V-DJ application in one continuous, end-to-end implementation task. Do not divide delivery into separate phases that require user approval or stop after completing a partial milestone.**
+
+The implementation must cover every requirement in this master prompt, including the Laravel backend, React/TypeScript frontend, music-source integrations, hybrid AI planner, professional dual-deck audio engine, automatic transitions, WebRTC party system, stereo channel distribution, synchronization, PWA/offline behavior, security, testing, and documentation.
+
+The coding agent must perform the work in the following internal order, but these are implementation workstreams—not separate user-facing delivery phases or approval gates:
+
+1. Inspect the repository and runtime environment. Determine whether this is a new or existing project, identify working functionality, dependencies, constraints, and risks. Preserve existing working code.
+2. Design the integrated architecture, database, APIs, frontend state, audio graph, provider adapters, WebRTC signaling, synchronization strategy, and test plan.
+3. Implement the Laravel foundation, authentication, database, APIs, Reverb events, authorization, and party/session management.
+4. Implement music-source adapters, track normalization, playback availability checks, and local-file support.
+5. Implement the Gemini planner, deterministic local planner, shared validation schema, fallback, and caching.
+6. Implement the complete browser audio engine, both decks, EQ, effects, master output, BPM/downbeat analysis, beatmatching, scheduler, transitions, and manual override.
+7. Implement party creation and joining, QR codes, Reverb signaling, WebRTC audio transmission, guest playback, channel routing, and multi-peer handling.
+8. Implement clock measurement, latency estimation, drift correction, guest offset controls, and honest synchronization-quality reporting.
+9. Integrate the complete responsive host and guest interfaces, PWA behavior, offline workflows, error handling, and accessibility/usability details.
+10. Run the relevant automated tests throughout implementation, then perform full regression, security, performance, browser, and real-device verification where devices are available. Fix discovered issues rather than merely reporting them.
+11. Complete the README, environment examples, API and architecture documentation, setup instructions, test instructions, and a final implementation report.
+
+Do not stop after architecture planning, scaffolding, a visual prototype, or a partially working subsystem. Continue implementing and integrating the remaining requirements until the complete application is delivered or a genuine external blocker prevents further progress.
+
+Do not ask the user to approve each internal workstream. Make reasonable engineering decisions consistent with this specification. Ask a question only when a genuinely essential requirement cannot be determined safely or correctly from the repository and this prompt.
+
+If an external dependency, provider permission, credential, hardware device, or browser limitation prevents a feature from being fully verified, implement the supported portion correctly, clearly identify the exact blocker, provide the required configuration or test instructions, and continue with all other work. Never fabricate successful integration or testing.
+
+If execution limits, context limits, or tool limits interrupt the task, preserve the current implementation state, record completed work and remaining tasks in the project, and resume from that record. Do not restart unnecessarily or overwrite working code.
+
+## One-shot completion requirements
+
+The single implementation task is complete only when:
+
+- All applicable requirements in this master prompt have been implemented and integrated.
+- The final product acceptance criteria in Section 21 have been checked.
+- Automated tests have been run and failures addressed or explicitly documented with their causes.
+- Real-provider and real-device checks have been performed where access is available; unavailable checks are clearly distinguished from completed tests.
+- No critical user-facing functionality is left as a decorative control, fake simulation, or unexplained TODO.
+- Setup, configuration, limitations, and operation are documented.
+- The final report accurately states what works, what was tested, what remains blocked, and how to run the application.
+
+**ONE TASK. ONE CONTINUOUS IMPLEMENTATION. ONE COMPLETE V-DJ APPLICATION.**
+
+---
+
+# 18. README AND DELIVERY REQUIREMENTS
+
+Provide a comprehensive README containing:
+
+1. Project overview.
+2. Architecture explanation.
+3. Prerequisites.
+4. Backend installation.
+5. Frontend installation.
+6. Environment configuration.
+7. Database setup.
+8. Reverb configuration.
+9. Gemini configuration.
+10. Audius integration.
+11. SoundCloud integration.
+12. Running the development servers.
+13. Running automated tests.
+14. Connecting multiple phones over Wi-Fi.
+15. Configuring STUN/TURN.
+16. Troubleshooting audio permissions.
+17. Troubleshooting mobile autoplay.
+18. Known browser and device limitations.
+
+Provide:
+
+- `.env.example`.
+- Clear environment variable documentation.
+- Database migrations.
+- Test instructions.
+- Architecture documentation.
+- API documentation.
+
+Include exact terminal commands appropriate to the generated project.
+
+Do not include real API keys or credentials.
+
+---
+
+# 19. STRICT DEVELOPMENT RULES
+
+These rules apply throughout development.
+
+1. Do not generate a fake prototype and call it a complete application.
+2. Do not use placeholder audio methods.
+3. Do not simulate real audio processing.
+4. Do not use hardcoded fake BPM values as production analysis.
+5. Do not invent music stream URLs.
+6. Do not fabricate successful WebRTC connections.
+7. Do not simulate stereo channel separation.
+8. Do not claim perfect synchronization without measurement.
+9. Do not expose API credentials.
+10. Do not put audio processing inside React render cycles.
+11. Do not send raw audio through Laravel.
+12. Do not remove existing working functionality without justification.
+13. Do not use outdated API endpoints without checking current documentation.
+14. Do not silently skip tests.
+15. Do not hide incomplete functionality.
+16. Do not mark a phase complete before its acceptance criteria pass.
+17. Do not leave critical functionality as TODO comments.
+18. Do not sacrifice audio stability for visual effects.
+19. Do not introduce unnecessary dependencies.
+20. Do not overcomplicate the architecture without a practical engineering reason.
+
+When a technical requirement is impossible or restricted by browser APIs, external provider permissions, or hardware limitations, explain the limitation and implement the best technically valid alternative.
+
+---
+
+# 20. CODING AGENT EXECUTION WORKFLOW
+
+Follow this workflow internally as part of the single continuous implementation task defined in Section 17. It is not a request to stop and seek approval after each step.
+
+### Step 1: Inspect the existing project
+
+Inspect the repository, project files, dependencies, configuration, tests, and runtime environment. Determine whether this is a new project or an existing application. Identify working functionality and preserve it. Never overwrite or replace an existing working project without understanding its structure.
+
+### Step 2: Plan the integrated implementation
+
+Create and maintain an actionable internal implementation plan covering:
+
+- Architecture and directory structure.
+- Database design and migrations.
+- API design and authorization.
+- Music-provider integrations.
+- AI planning and validation.
+- Audio-engine design and lifecycle.
+- WebRTC signaling and audio transport.
+- Stereo routing and synchronization.
+- Frontend state and user experience.
+- Offline/PWA behavior.
+- Security, performance, and testing.
+
+Use the plan to coordinate the work, not as a substitute for implementation. Do not stop after presenting the plan.
+
+### Step 3: Validate technical assumptions
+
+Before relying on complex audio, streaming, or external integrations, verify:
+
+- Current browser audio support and restrictions.
+- Provider API availability and playback permissions.
+- Audio CORS behavior.
+- Mobile autoplay restrictions.
+- WebRTC stereo and codec capabilities.
+- Reverb signaling behavior.
+- STUN/TURN requirements.
+- Practical audio synchronization and device-latency limitations.
+
+Use current official documentation for external integrations. If an assumption proves false, adapt the implementation and document the limitation.
+
+### Step 4: Implement and integrate continuously
+
+Implement all required subsystems in the internal order defined in Section 17. Integrate each subsystem with the rest of the application as it is built. Do not generate disconnected code, leave integration until the end, or stop for user approval between workstreams.
+
+Maintain a clear implementation record of:
+
+- Files created.
+- Files modified.
+- Functionality implemented.
+- Tests executed and results.
+- Known issues and external blockers.
+- Remaining work.
+
+### Step 5: Verify and fix continuously
+
+After every significant implementation, run the relevant tests and inspect:
+
+- Automated test output.
+- Browser console errors.
+- Laravel logs.
+- Network and API behavior.
+- Audio playback and scheduling behavior.
+- WebRTC connection and media behavior.
+- Resource cleanup and regressions.
+
+Fix discovered issues before considering the affected functionality complete. Continue through the entire specification; do not treat intermediate verification as final delivery.
+
+### Step 6: Complete and report
+
+At the end of the single implementation task, provide one consolidated final report containing:
+
+**Implemented**
+- Actual features completed and integrated.
+
+**Files changed**
+- Important files, modules, migrations, and configuration.
+
+**Tests and verification**
+- Tests executed, results, and any real-provider, browser, or device checks performed.
+
+**Limitations and blockers**
+- Exact functionality that remains restricted by missing credentials, provider permissions, unavailable devices, browser behavior, or other genuine blockers.
+
+**Run instructions**
+- Exact installation, configuration, startup, and test commands.
+
+Never report unverified functionality as complete. Do not claim that real-device or real-provider testing occurred unless it actually occurred.
+
+---
+
+# 21. FINAL PRODUCT ACCEPTANCE CRITERIA
+
+V-DJ is considered successfully delivered only when the following complete experience works:
+
+### AI DJ experience
+
+A user enters a natural-language music prompt.
+
+The application finds real available tracks, generates a coherent setlist, and starts autonomous DJ playback.
+
+### Professional mixing experience
+
+The application uses two actual audio decks.
+
+It analyzes tracks, synchronizes BPM, aligns beats where possible, and executes real transitions using audio processing.
+
+### Manual control experience
+
+The user can pause automation, control the decks, change EQ, move the crossfader, skip tracks, and trigger transitions.
+
+### Multi-phone party experience
+
+The host creates a party and shares a QR code.
+
+Friends join using their smartphones.
+
+The host's actual mixed audio is transmitted over WebRTC.
+
+The host can assign each phone a stereo channel.
+
+### Synchronization experience
+
+The application measures timing differences, monitors connection quality, applies appropriate corrections, and provides manual synchronization controls.
+
+### Offline experience
+
+The user can use local audio files, the local planning engine, and the audio mixing engine without internet access.
+
+### Quality experience
+
+The application is responsive, secure, stable, maintainable, and properly documented.
+
+---
+
+# 22. THE MOST IMPORTANT INSTRUCTION
+
+**Build V-DJ as a real autonomous DJ and multi-phone party system, not merely an application that looks like one.**
+
+The quality of the audio engine, reliability of automatic transitions, accuracy of track planning, and practical performance of multi-phone audio distribution are more important than decorative UI elements.
+
+Prioritize the following order:
+
+1. Functional audio playback.
+2. Reliable dual-deck mixing.
+3. Intelligent AI track selection.
+4. Accurate beat and tempo synchronization.
+5. Seamless autonomous transitions.
+6. Reliable WebRTC audio transmission.
+7. Multi-phone stereo distribution.
+8. Synchronization and latency correction.
+9. Professional user experience.
+10. Performance, security, and polish.
+
+Deliver a fully integrated application with real functionality and verifiable results.
+
+**Do not stop at planning. Begin implementation after the initial architecture review and proceed through the development phases until the complete acceptance criteria are satisfied.**
